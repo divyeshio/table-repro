@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: oklch(0.97 0 0);
+  --color-accent-foreground: oklch(0.21 0.006 285.885);
+  --color-muted-foreground: oklch(0.552 0.016 285.938);
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.141 0.005 285.823);
+  --color-border: oklch(0.92 0.004 286.32);
+  --color-card: oklch(1 0 0);
+  --color-primary: oklch(0.21 0.006 285.885);
+  --color-primary-foreground: oklch(0.985 0 0);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-accent: oklch(0.274 0.006 286.033);
+    --color-accent-foreground: oklch(0.985 0 0);
+    --color-muted-foreground: oklch(0.705 0.015 286.067);
+    --color-background: oklch(0.141 0.005 285.823);
+    --color-foreground: oklch(0.985 0 0);
+    --color-border: oklch(0.274 0.006 286.033);
+    --color-card: oklch(0.21 0.006 285.885);
+    --color-primary: oklch(0.985 0 0);
+    --color-primary-foreground: oklch(0.141 0.005 285.823);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
