@@ -7,8 +7,9 @@
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import { memo } from "react";
 
-import { cn } from "../lib/utils";
-import type { Person } from "../types/person";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import type { Person } from "@/types/person";
 import { AppTable } from "./app-table";
 
 // ── Inner row component ──────────────────────────────────────────────────────
@@ -22,19 +23,20 @@ const PersonTableRow = ({
   onSelect: (id: string) => void;
   visibleColumns: number; // passed so memo re-renders on column visibility change
 }) => (
-  <tr
+  <TableRow
     className={cn(
-      "cursor-pointer hover:bg-accent/50 border-b border-border",
+      "cursor-pointer",
       row.getIsSelected() && "bg-accent/30",
     )}
+    data-state={row.getIsSelected() ? "selected" : undefined}
     onClick={() => onSelect(row.getValue("id"))}
   >
     {row.getVisibleCells().map((cell) => (
-      <td key={cell.id} className="p-2 text-sm">
+      <TableCell key={cell.id} className="text-sm">
         {flexRender(cell.column.columnDef.cell, cell.getContext())}
-      </td>
+      </TableCell>
     ))}
-  </tr>
+  </TableRow>
 );
 
 // ── Memoized row — only re-renders when selection, column count, or data changes ──
@@ -89,7 +91,6 @@ export const PersonAppTable = ({
       totalCount={totalCount}
       label={label}
       isStale={isStale}
-      maxBodyHeight="87vh"
     />
   );
 };

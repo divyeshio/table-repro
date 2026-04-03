@@ -1,8 +1,15 @@
 import { flexRender, type Row, type RowData, type Table } from "@tanstack/react-table";
-import { Loader2Icon } from "lucide-react";
 import { type ReactNode } from "react";
 
-import { cn } from "../lib/utils";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { useVirtualInfiniteScroll } from "./use-virtual-infinite-scroll";
 
 declare module "@tanstack/table-core" {
@@ -67,15 +74,15 @@ export function AppTable<TData>({
       >
         <table style={{ tableLayout: rows.length > 0 ? "fixed" : "auto", width: "100%", borderCollapse: "collapse" }}>
           {/* Sticky header */}
-          <thead className="sticky top-0 z-20 border-b border-border bg-background">
+          <TableHeader className="sticky top-0 z-20 border-b border-border bg-background">
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers
                   .filter((header) => header.column.getIsVisible())
                   .map((header) => (
-                    <th
+                    <TableHead
                       key={header.id}
-                      className="sticky top-0 z-20 border-r border-border bg-background p-2 text-left text-sm font-bold"
+                      className="sticky top-0 z-20 border-r border-border bg-background text-left text-sm font-bold"
                       style={{
                         width: header.column.columnDef.meta?.isGrow
                           ? "auto"
@@ -86,26 +93,26 @@ export function AppTable<TData>({
                       }}
                     >
                       {flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
+                    </TableHead>
                   ))}
-              </tr>
+              </TableRow>
             ))}
-          </thead>
+          </TableHeader>
 
           {/* Virtual body */}
-          <tbody className={cn("transition-opacity duration-200", isStale && "opacity-50")}>
+          <TableBody className={cn("transition-opacity duration-200", isStale && "opacity-50")}>
             {isLoading && rows.length === 0 ? (
-              <tr>
-                <td
+              <TableRow>
+                <TableCell
                   colSpan={table.getVisibleLeafColumns().length}
                   className="h-24 text-center"
                 >
                   <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <Loader2Icon className="h-4 w-4 animate-spin" />
+                    <Spinner />
                     <span>Loading {label || "items"}...</span>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : rows.length ? (
               <>
                 {/* Top spacer */}
@@ -133,23 +140,23 @@ export function AppTable<TData>({
                 </tr>
               </>
             ) : (
-              <tr>
-                <td
+              <TableRow>
+                <TableCell
                   colSpan={table.getAllColumns().length}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No results.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
+          </TableBody>
         </table>
 
         {/* Infinite scroll loading indicator */}
         {isFetchingNextPage && (
           <div className="sticky bottom-0 z-10 border-t border-border bg-background/80 p-4 text-center backdrop-blur-sm">
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2Icon className="h-4 w-4 animate-spin" />
+              <Spinner />
               <span>Loading more {label || "items"}...</span>
             </div>
           </div>

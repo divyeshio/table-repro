@@ -8,10 +8,17 @@
  *  - Standard spacer-rows virtualization — avoids measureElement feedback loops
  */
 import { type RowData, type TableFeatures } from "@tanstack/react-table";
-import { Loader2Icon } from "lucide-react";
 
-import { cn } from "../lib/utils";
-import { useAppTable } from "../hooks/use-app-table";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { useAppTable } from "@/hooks/use-app-table";
 import { useVirtualInfiniteScroll } from "./use-virtual-infinite-scroll";
 
 declare module "@tanstack/table-core" {
@@ -85,9 +92,9 @@ export function AppTable<TData extends RowData>({
                 borderCollapse: "collapse",
               }}
             >
-              <thead className="sticky top-0 z-20 border-b border-border bg-background">
+              <TableHeader className="sticky top-0 z-20 border-b border-border bg-background">
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
+                  <TableRow key={headerGroup.id} className="hover:bg-transparent">
                     {headerGroup.headers
                       .filter((h) => h.column.getIsVisible())
                       .map((header) => (
@@ -100,8 +107,8 @@ export function AppTable<TData extends RowData>({
                           })}
                         >
                           {(h) => (
-                            <th
-                              className="sticky top-0 z-20 border-r border-border bg-background p-2 text-left text-sm font-bold"
+                            <TableHead
+                              className="sticky top-0 z-20 border-r border-border bg-background text-left text-sm font-bold"
                               style={{
                                 width: h.column.columnDef.meta?.isGrow
                                   ? "auto"
@@ -112,24 +119,24 @@ export function AppTable<TData extends RowData>({
                               }}
                             >
                               <h.FlexRender />
-                            </th>
+                            </TableHead>
                           )}
                         </table.AppHeader>
                       ))}
-                  </tr>
+                  </TableRow>
                 ))}
-              </thead>
+              </TableHeader>
 
-              <tbody className={cn("transition-opacity duration-200", isStale && "opacity-50")}>
+              <TableBody className={cn("transition-opacity duration-200", isStale && "opacity-50")}>
                 {rows.length === 0 ? (
-                  <tr>
-                    <td
+                  <TableRow>
+                    <TableCell
                       colSpan={table.getAllColumns().length}
                       className="h-24 text-center text-muted-foreground"
                     >
                       No results.
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   <>
                     <tr aria-hidden>
@@ -143,23 +150,24 @@ export function AppTable<TData extends RowData>({
                       const row = rows[vi.index];
                       if (!row) return null;
                       return (
-                        <tr
+                        <TableRow
                           key={row.id}
-                          className="cursor-pointer border-b border-border hover:bg-accent/50"
+                          className="cursor-pointer"
+                          data-state={row.getIsSelected() ? "selected" : undefined}
                         >
                           {row.getVisibleCells().map((cell) => (
                             <table.AppCell key={cell.id} cell={cell}>
                               {(c) => (
-                                <td
-                                  className="p-2 text-sm"
+                                <TableCell
+                                  className="text-sm"
                                   style={{ width: c.column.getSize() }}
                                 >
                                   <c.FlexRender />
-                                </td>
+                                </TableCell>
                               )}
                             </table.AppCell>
                           ))}
-                        </tr>
+                        </TableRow>
                       );
                     })}
 
@@ -177,7 +185,7 @@ export function AppTable<TData extends RowData>({
                     </tr>
                   </>
                 )}
-              </tbody>
+              </TableBody>
             </table>
           )}
         </table.AppTable>
@@ -185,7 +193,7 @@ export function AppTable<TData extends RowData>({
         {isFetchingNextPage && (
           <div className="sticky bottom-0 z-10 border-t border-border bg-background/80 p-4 text-center backdrop-blur-sm">
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Loader2Icon className="h-4 w-4 animate-spin" />
+              <Spinner />
               <span>Loading more {label || "items"}...</span>
             </div>
           </div>

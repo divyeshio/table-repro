@@ -11,7 +11,8 @@
  *  - table.Subscribe with a selector provides granular state subscriptions
  *    so only the exact rows whose selection state changed re-render
  */
-import { useCellContext, useTableContext } from "../hooks/use-app-table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useCellContext, useTableContext } from "@/hooks/use-app-table";
 
 /** Generic text cell renderer */
 export function TextCell() {
@@ -32,13 +33,12 @@ export function SelectionCell() {
     <table.Subscribe selector={(state) => state.rowSelection[row.id]}>
       {() => (
         <div className="flex w-full items-center justify-center">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={row.getIsSelected()}
             disabled={!row.getCanSelect()}
-            onChange={row.getToggleSelectedHandler()}
+            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+            onClick={(e) => e.stopPropagation()}
             aria-label="Select row"
-            className="h-4 w-4 cursor-pointer"
           />
         </div>
       )}

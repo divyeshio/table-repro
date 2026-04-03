@@ -20,7 +20,6 @@ import {
   useCallback,
   useDeferredValue,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
@@ -29,7 +28,14 @@ import type { Person } from "./types/person";
 import { personTableColumns } from "./components/person-columns";
 import { AppTable } from "./components/app-table";
 import { features, useAppTable } from "./hooks/use-app-table";
-import { cn } from "./lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 const PAGE_SIZE = 50;
 
@@ -127,8 +133,6 @@ export default function App() {
   }, [handleRefreshState, table]);
 
   // ── Column visibility dropdown ───────────────────────────────────────────────
-  const [colVisOpen, setColVisOpen] = useState(false);
-  const colVisRef = useRef<HTMLDivElement>(null);
 
   // ── Read selection count from store ─────────────────────────────────────────
   const rowSelectionCount = useStore(
@@ -153,7 +157,7 @@ export default function App() {
         {/* Search */}
         <div className="relative flex-1 max-w-xs">
           <SearchIcon className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-          <input
+          <Input
             type="text"
             placeholder="Search people..."
             value={filter}
@@ -161,10 +165,7 @@ export default function App() {
               setFilter(e.target.value);
               setLoadedCount(PAGE_SIZE);
             }}
-            className={cn(
-              "h-9 w-full rounded-md border border-border bg-background pl-8 pr-8 text-sm outline-none focus:ring-2 focus:ring-primary/30",
-              isPending && "opacity-60",
-            )}
+            className={`pl-8 pr-8${isPending ? " opacity-60" : ""}`}
           />
           {filter && (
             <button
@@ -177,61 +178,46 @@ export default function App() {
         </div>
 
         {/* Refresh */}
-        <button
-          className="flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm hover:bg-accent"
-          onClick={handleRefresh}
-        >
-          <RefreshCwIcon className={cn("size-4", isRefreshing && "animate-spin")} />
+        <Button variant="outline" size="sm" onClick={handleRefresh}>
+          <RefreshCwIcon className={isRefreshing ? "animate-spin" : ""} />
           Refresh
-        </button>
+        </Button>
 
         {/* Column visibility */}
-        <div ref={colVisRef} className="relative">
-          <button
-            className="flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm hover:bg-accent"
-            onClick={() => setColVisOpen((v) => !v)}
-            onBlur={(e) => {
-              if (!colVisRef.current?.contains(e.relatedTarget as Node)) setColVisOpen(false);
-            }}
-          >
-            <EyeIcon className="size-4" />
-            Columns
-          </button>
-          {colVisOpen && (
-            <div className="absolute right-0 top-10 z-50 min-w-[180px] rounded-md border border-border bg-card p-2 shadow-lg">
-              {table.getAllColumns().map((col) => {
-                if (!col.getCanHide()) return null;
-                return (
-                  <label
-                    key={col.id}
-                    className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-accent"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={col.getIsVisible()}
-                      onChange={col.getToggleVisibilityHandler()}
-                      className="h-4 w-4"
-                    />
-                    {col.columnDef.meta?.name || col.id}
-                  </label>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <EyeIcon /> Columns
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table.getAllColumns().map((col) => {
+              if (!col.getCanHide()) return null;
+              return (
+                <DropdownMenuCheckboxItem
+                  key={col.id}
+                  checked={col.getIsVisible()}
+                  onCheckedChange={(checked) => col.toggleVisibility(checked)}
+                >
+                  {col.columnDef.meta?.name || col.id}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Selection summary (reads from store — no useState) */}
         {rowSelectionCount > 0 && (
           <span className="ml-auto text-sm text-muted-foreground">
             {rowSelectionCount} selected
-            <button
-              className="ml-2 text-xs underline hover:text-foreground"
-              onClick={() =>
-                (() => table.setRowSelection({}))()
-              }
+            <Button
+              variant="link"
+              size="sm"
+              className="ml-1 h-auto p-0 text-xs"
+              onClick={() => (() => table.setRowSelection({}))()}
             >
               Clear
-            </button>
+            </Button>
           </span>
         )}
       </div>
@@ -246,7 +232,6 @@ export default function App() {
           totalCount={totalCount}
           label="People"
           isStale={isPending}
-          maxBodyHeight="87vh"
         />
       </div>
 
@@ -255,12 +240,9 @@ export default function App() {
         <div className="fixed right-0 top-0 h-full w-80 overflow-auto border-l border-border bg-card p-4 shadow-xl">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-semibold">Person Detail</h2>
-            <button
-              onClick={() => setDetailId("")}
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Button variant="ghost" size="icon-xs" onClick={() => setDetailId("")} className="text-muted-foreground hover:text-foreground">
               <XIcon className="size-4" />
-            </button>
+            </Button>
           </div>
           {(() => {
             const person = persons.find((p) => p.id === detailId);

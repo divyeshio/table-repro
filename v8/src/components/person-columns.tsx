@@ -3,8 +3,18 @@ import type { Table } from "@tanstack/react-table";
 import { HeartIcon, MoreHorizontalIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { cn } from "../lib/utils";
-import type { Person } from "../types/person";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import type { Person } from "@/types/person";
 import { AppTableColumnHeader } from "./app-table-column-header";
 
 const columnHelper = createColumnHelper<Person>();
@@ -43,27 +53,28 @@ export const personTableColumns = [
     enableHiding: false,
     header: ({ table }) => (
       <div className="flex h-full w-full items-center justify-center">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           ref={(el) => {
-            if (el) el.indeterminate = table.getIsSomePageRowsSelected();
+            if (el) {
+              const input = el as unknown as HTMLInputElement;
+              input.indeterminate = table.getIsSomePageRowsSelected();
+            }
           }}
-          onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+          onCheckedChange={(checked) =>
+            table.toggleAllPageRowsSelected(checked === true)
+          }
           aria-label="Select all"
-          className="h-4 w-4 cursor-pointer"
         />
       </div>
     ),
     cell: ({ row }) => (
       <div className="flex w-full items-center justify-center">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={row.getIsSelected()}
           onClick={(e) => e.stopPropagation()}
-          onChange={(e) => row.toggleSelected(e.target.checked)}
+          onCheckedChange={(checked) => row.toggleSelected(checked === true)}
           aria-label="Select row"
-          className="h-4 w-4 cursor-pointer"
         />
       </div>
     ),
@@ -114,16 +125,9 @@ export const personTableColumns = [
     ),
     cell: (info) => (
       <div className="flex items-center justify-center">
-        <span
-          className={cn(
-            "inline-flex rounded-full px-2 py-0.5 text-xs font-semibold",
-            info.getValue() === "Active"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-          )}
-        >
+        <Badge variant={info.getValue() === "Active" ? "success" : "secondary"}>
           {info.getValue()}
-        </span>
+        </Badge>
       </div>
     ),
   }),
@@ -136,9 +140,7 @@ export const personTableColumns = [
     ),
     cell: (info) => (
       <div className="flex items-center justify-center">
-        <span className="inline-flex rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-          {info.getValue()}
-        </span>
+        <Badge variant="secondary">{info.getValue()}</Badge>
       </div>
     ),
   }),
@@ -203,12 +205,7 @@ export const personTableColumns = [
     cell: (info) => (
       <div className="flex flex-wrap gap-1">
         {info.getValue().map((tag) => (
-          <span
-            key={tag}
-            className="rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800"
-          >
-            {tag}
-          </span>
+          <Badge key={tag} variant="outline">{tag}</Badge>
         ))}
       </div>
     ),
@@ -243,12 +240,13 @@ function LikeCell({ initialLiked }: { initialLiked: boolean }) {
   const [liked, setLiked] = useState(initialLiked);
   return (
     <div className="flex w-full items-center justify-center">
-      <button
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={(e) => {
           e.stopPropagation();
           setLiked((v) => !v);
         }}
-        className="rounded p-1 hover:bg-accent"
         aria-label="Toggle like"
       >
         <HeartIcon
@@ -257,51 +255,34 @@ function LikeCell({ initialLiked }: { initialLiked: boolean }) {
             liked ? "fill-red-500 text-red-500" : "text-muted-foreground",
           )}
         />
-      </button>
+      </Button>
     </div>
   );
 }
 
 function RowActionsCell({ id, table }: { id: string; table: Table<Person> }) {
-  const [open, setOpen] = useState(false);
   const _assets = useMemo(() => [id], [id]);
-  void table; // available for meta-based actions if needed
+  void table;
 
   return (
-    <div className="relative flex items-center justify-center">
-      <button
-        className="rounded p-1 hover:bg-accent"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        aria-label="Row actions"
-      >
-        <MoreHorizontalIcon className="size-4" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-7 z-50 min-w-[140px] rounded-md border border-border bg-card py-1 shadow-lg">
-          <button
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent"
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-            }}
+    <div className="flex items-center justify-center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Row actions"
           >
-            View Profile
-          </button>
-          <button
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-            }}
-          >
-            Deactivate
-          </button>
-        </div>
-      )}
+            <MoreHorizontalIcon className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>View Profile</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive">Deactivate</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

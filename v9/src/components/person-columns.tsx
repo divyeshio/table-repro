@@ -1,22 +1,18 @@
-/**
- * PersonColumns.tsx — v9
- *
- * Mirrors domain-table-columns.tsx from the table-v9 branch.
- * Key v9 differences from v8:
- *  - createAppColumnHelper<T>() instead of createColumnHelper<T>()
- *  - columnHelper.columns([...]) wrapper instead of plain array
- *  - selectAction column uses cell.SelectionCell / header.SelectionHeader
- *    (built into createTableHook — no manual Checkbox JSX)
- *  - enableResizing removed (v9 cleanup)
- *  - sortingFn removed from statusCodeChain equivalent
- *  - Table type cast uses AppTable<T> instead of Table<T>
- */
 import { HeartIcon, MoreHorizontalIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { cn } from "../lib/utils";
-import type { Person } from "../types/person";
-import { AppColumn, AppTable, createAppColumnHelper } from "../hooks/use-app-table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import type { Person } from "@/types/person";
+import { AppColumn, AppTable, createAppColumnHelper } from "@/hooks/use-app-table";
 import { AppTableColumnHeader } from "./header-components";
 
 const columnHelper = createAppColumnHelper<Person>();
@@ -103,16 +99,9 @@ export const personTableColumns = columnHelper.columns([
     ),
     cell: (info) => (
       <div className="flex items-center justify-center">
-        <span
-          className={cn(
-            "inline-flex rounded-full px-2 py-0.5 text-xs font-semibold",
-            info.getValue() === "Active"
-              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-          )}
-        >
+        <Badge variant={info.getValue() === "Active" ? "success" : "secondary"}>
           {info.getValue()}
-        </span>
+        </Badge>
       </div>
     ),
   }),
@@ -125,9 +114,7 @@ export const personTableColumns = columnHelper.columns([
     ),
     cell: (info) => (
       <div className="flex items-center justify-center">
-        <span className="inline-flex rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-          {info.getValue()}
-        </span>
+        <Badge variant="secondary">{info.getValue()}</Badge>
       </div>
     ),
   }),
@@ -198,12 +185,7 @@ export const personTableColumns = columnHelper.columns([
     cell: (info) => (
       <div className="flex flex-wrap gap-1">
         {info.getValue().map((tag) => (
-          <span
-            key={tag}
-            className="rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800"
-          >
-            {tag}
-          </span>
+          <Badge key={tag} variant="outline">{tag}</Badge>
         ))}
       </div>
     ),
@@ -243,16 +225,16 @@ function LikeCell({
   column: AppColumn<Person, unknown>;
   table: AppTable<Person>;
 }) {
-  // In repro: local state (no API)
   const [liked, setLiked] = useState(initialLiked);
   return (
     <div className="flex w-full items-center justify-center">
-      <button
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={(e) => {
           e.stopPropagation();
           setLiked((v) => !v);
         }}
-        className="rounded p-1 hover:bg-accent"
         aria-label="Toggle like"
       >
         <HeartIcon
@@ -261,50 +243,33 @@ function LikeCell({
             liked ? "fill-red-500 text-red-500" : "text-muted-foreground",
           )}
         />
-      </button>
+      </Button>
     </div>
   );
 }
 
 function RowActionsCell({ id, table: _table }: { id: string; table: AppTable<Person> }) {
-  const [open, setOpen] = useState(false);
   const _assets = useMemo(() => [id], [id]);
 
   return (
-    <div className="relative flex items-center justify-center">
-      <button
-        className="rounded p-1 hover:bg-accent"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        aria-label="Row actions"
-      >
-        <MoreHorizontalIcon className="size-4" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-7 z-50 min-w-[140px] rounded-md border border-border bg-card py-1 shadow-lg">
-          <button
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent"
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-            }}
+    <div className="flex items-center justify-center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Row actions"
           >
-            View Profile
-          </button>
-          <button
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-            }}
-          >
-            Deactivate
-          </button>
-        </div>
-      )}
+            <MoreHorizontalIcon className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>View Profile</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive">Deactivate</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
