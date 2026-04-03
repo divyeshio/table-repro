@@ -8,6 +8,7 @@
  *  - Standard spacer-rows virtualization — avoids measureElement feedback loops
  */
 import { type RowData, type TableFeatures } from "@tanstack/react-table";
+import { memo } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -18,7 +19,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { useAppTable } from "@/hooks/use-app-table";
+import {
+  type AppRow,
+  useAppTable,
+} from "@/hooks/use-app-table";
 import { useVirtualInfiniteScroll } from "./use-virtual-infinite-scroll";
 
 declare module "@tanstack/table-core" {
@@ -33,6 +37,53 @@ declare module "@tanstack/table-core" {
     isGrow?: boolean;
   }
 }
+
+type AppTableRowProps<TData extends RowData> = {
+  row: AppRow<TData>;
+  table: ReturnType<typeof useAppTable<TData>>;
+  isSelected: boolean;
+  visibleColumnCount: number;
+};
+
+function AppTableRow<TData extends RowData>({
+  row,
+  table,
+  isSelected,
+}: AppTableRowProps<TData>) {
+  return (
+    <TableRow
+      className="cursor-pointer"
+      data-state={isSelected ? "selected" : undefined}
+    >
+      {row.getVisibleCells().map((cell) => (
+        <table.AppCell key={cell.id} cell={cell}>
+          {(c) => (
+            <TableCell
+              className="text-sm"
+              style={{ width: c.column.getSize() }}
+            >
+              <c.FlexRender />
+            </TableCell>
+          )}
+        </table.AppCell>
+      ))}
+    </TableRow>
+  );
+}
+
+const MemoizedAppTableRow = memo(
+  AppTableRow,
+  <TData extends RowData>(
+    prev: Readonly<AppTableRowProps<TData>>,
+    next: Readonly<AppTableRowProps<TData>>,
+  ) => {
+    return (
+      prev.visibleColumnCount === next.visibleColumnCount &&
+      prev.isSelected === next.isSelected &&
+      prev.row.original === next.row.original
+    );
+  },
+) as typeof AppTableRow;
 
 export function AppTable<TData extends RowData>({
   table,
@@ -150,24 +201,13 @@ export function AppTable<TData extends RowData>({
                       const row = rows[vi.index];
                       if (!row) return null;
                       return (
-                        <TableRow
+                        <MemoizedAppTableRow
                           key={row.id}
-                          className="cursor-pointer"
-                          data-state={row.getIsSelected() ? "selected" : undefined}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <table.AppCell key={cell.id} cell={cell}>
-                              {(c) => (
-                                <TableCell
-                                  className="text-sm"
-                                  style={{ width: c.column.getSize() }}
-                                >
-                                  <c.FlexRender />
-                                </TableCell>
-                              )}
-                            </table.AppCell>
-                          ))}
-                        </TableRow>
+                          row={row}
+                          table={table}
+                          isSelected={row.getIsSelected()}
+                          visibleColumnCount={table.getVisibleLeafColumns().length}
+                        />
                       );
                     })}
 
