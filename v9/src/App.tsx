@@ -12,9 +12,8 @@
  *  - useDebouncedValue (500ms) + useDeferredValue for search (same as v8)
  */
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { useStore } from "@tanstack/react-store";
-import { createStore } from "@tanstack/react-store";
-import { getInitialTableState } from "@tanstack/react-table";
+import { createAtom, useStore } from "@tanstack/react-store";
+import type { ColumnVisibilityState, RowSelectionState, SortingState } from "@tanstack/react-table";
 import { EyeIcon, RefreshCwIcon, SearchIcon, XIcon } from "lucide-react";
 import {
   useCallback,
@@ -27,7 +26,7 @@ import { ALL_PERSONS } from "./data/persons";
 import type { Person } from "./types/person";
 import { personTableColumns } from "./components/person-columns";
 import { AppTable } from "./components/app-table";
-import { features, useAppTable } from "./hooks/use-app-table";
+import { useAppTable } from "./hooks/use-app-table";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -40,19 +39,17 @@ import { Input } from "@/components/ui/input";
 const PAGE_SIZE = 50;
 
 /**
- * Module-level store — persists table state (columnVisibility, sorting, rowSelection)
+ * Module-level atoms — persist table state (columnVisibility, sorting, rowSelection)
  * across component re-renders WITHOUT causing React re-renders in the whole tree.
- * This is the core v9 state management difference vs v8's useState.
+ * This is the v9 atoms-based state management (replaces the old createStore approach).
  */
-const myTableStore = createStore(
-  getInitialTableState(features, {
-    columnVisibility: {
-      id: false,
-      tags: false,
-      notes: false,
-    },
-  }),
-);
+const sortingAtom = createAtom<SortingState>([]);
+const rowSelectionAtom = createAtom<RowSelectionState>({});
+const columnVisibilityAtom = createAtom<ColumnVisibilityState>({
+  id: false,
+  tags: false,
+  notes: false,
+});
 
 export default function App() {
   // ── Search state ────────────────────────────────────────────────────────────
@@ -60,8 +57,8 @@ export default function App() {
   const [debouncedSearch] = useDebouncedValue(filter, { wait: 500 });
   const deferredSearch = useDeferredValue(debouncedSearch);
 
-  // ── Read sorting from the store (v9 pattern — no useState for sorting) ──────
-  const sorting = useStore(myTableStore, (s) => s.sorting);
+  // ── Read sorting from the atom (v9 pattern — no useState for sorting) ──────
+  const sorting = useStore(sortingAtom, (s) => s);
   const sortBy = sorting[0]?.id ?? "";
   const sortDesc = sorting[0]?.desc ?? false;
 
@@ -119,11 +116,30 @@ export default function App() {
     setTimeout(() => setIsRefreshing(false), 500);
   }, []);
 
-  // ── Table instance (v9: takes a store instead of manual state) ───────────────
+  // ── Table instance (v9: uses atoms instead of store) ───────────────────────
   const table = useAppTable({
     data: persons,
     columns: personTableColumns,
-    store: myTableStore,
+    atoms: {
+      sorting: sortingAtom,
+      rowSelection: rowSelectionAtom,
+      columnVisibility: columnVisibilityAtom,
+    },
+    onSortingChange: (updater) => {
+      sortingAtom.set(
+        typeof updater === "function" ? updater : () => updater,
+      );
+    },
+    onRowSelectionChange: (updater) => {
+      rowSelectionAtom.set(
+        typeof updater === "function" ? updater : () => updater,
+      );
+    },
+    onColumnVisibilityChange: (updater) => {
+      columnVisibilityAtom.set(
+        typeof updater === "function" ? updater : () => updater,
+      );
+    },
   });
 
   // handleRefresh uses table.setRowSelection which needs table instance
@@ -134,10 +150,10 @@ export default function App() {
 
   // ── Column visibility dropdown ───────────────────────────────────────────────
 
-  // ── Read selection count from store ─────────────────────────────────────────
+  // ── Read selection count from atom ──────────────────────────────────────────
   const rowSelectionCount = useStore(
-    myTableStore,
-    (s) => Object.keys(s.rowSelection).length,
+    rowSelectionAtom,
+    (s) => Object.keys(s).length,
   );
 
   // ── Selected row detail ──────────────────────────────────────────────────────
