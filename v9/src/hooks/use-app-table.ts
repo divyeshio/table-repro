@@ -46,7 +46,7 @@ export const {
   appFeatures,
 } = createTableHook({
   // Features are set once here and shared across all tables
-  _features: features,
+  features: features,
 
   // Cell-level components (accessible via cell.ComponentName inside AppCell)
   cellComponents: CellComponents,
